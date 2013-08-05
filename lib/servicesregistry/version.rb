@@ -1,0 +1,3 @@
+module Servicesregistry
+  VERSION = "0.0.1"
+end
