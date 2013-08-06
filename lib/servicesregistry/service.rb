@@ -1,5 +1,3 @@
-require "typhoeus"
-
 module Servicesregistry
   class Service
     include ActiveModel::Model
@@ -15,10 +13,12 @@ module Servicesregistry
     # password  => of the service to call
     attr_accessor :password
     
+    # for remote_calls
     # request_method => :get, :post, :put/:patch, :delete => for Typhoeus curl requests
     attr_accessor :request_method
     
     # rabbitmq => turn on/off messaging for the service call via rabbitmq amqp messaging
+    # rabbitmq => name of the worker
     attr_accessor :rabbitmq
     
     # url => of the service call, for remote service calls
@@ -83,39 +83,42 @@ module Servicesregistry
     end
     
     def to_rabbitmq(*args)
-      # TODO implement!
+      # TODO implement
+      raise "TODO implement rabbitmq messaging"
     end
 
     # executing calls:
     # => enqueue to rabbitmq messaging system => to_rabbitmq
     # => call a remote service over http      => to_remote
-    # => call a local service directly        => to_local
-    def execute(*args)
+    # => call a local service directly        => send(:execute_communication)
+    def execute_communication(*args)
       if self.rabbitmq
         self.to_rabbitmq(*args)
         return nil
       else
-        call = self.local_class ? local_class.send(:execute, *args) : self.to_remote(*args)
+        call = self.local_class ? local_class.send(:execute_communication, *args) : self.to_remote(*args)
         return call
       end
+    end
+    
+    # update the services.yml file wihtin the current service
+    # this yml file contains all services details from the
+    # servicesmaster database
+    # this is necessary for the communication to other services
+    def update_adapter(*args)
+      # todo implement!
     end
     
     # check if service, which will be called is a local class
     # or not => local service vs remote service
     def local_class
       begin
-        self.name.to_s.camelize
+        self.name.to_s.camelize.constantize
       rescue NameError => e
         false
       end
     end
-    
-    ###############################################################################
-    
-    ######### private methods #####################################################
-    
-    private
-    
+
     # prepare params for call
     # name => name of the soa class, which will be called
     # uuid => uuid of the soa class, which will be called
@@ -124,11 +127,11 @@ module Servicesregistry
     def params(payload)
       { "name"    => name.to_s,
         "uuid"    => uuid.to_s,
-        "password"    => password 
+        "password"    => password,
         "args"    => json_encode(payload)
       }
     end
-    
+
     # encode the given string to json format
     def json_encode(string)
       string.to_json
