@@ -10,6 +10,7 @@ require "json"
 require "servicesregistry/rack/middleware/communication"
 require "servicesregistry/service"
 require "servicesregistry/registry"
+require "servicesregistry/adapter"
 
 module Servicesregistry
   
