@@ -3,6 +3,9 @@ module Servicesregistry
     module Middleware
       class Adapter
         
+        # define custom error class for authorization
+        class UnauthorisedError < StandardError; end
+        
         ######### initializer #########################################################
         
         # normal rack middleware initializer
@@ -21,35 +24,29 @@ module Servicesregistry
         # rack middleware call method
         def call(env)
           if env["PATH_INFO"] =~ @config[:sr_adapter]
-            require "debugger"
-            debugger
             begin
               request = ::Rack::Request.new(env)
               params = request.params
               
               # find service
-              service = Servicesregistry.find(params["name"], params["uuid"])
-              raise TypeError, "Service #{request.params["name"]} not found" unless service
+              service = Servicesregistry.find(params["service_name"])
+              raise TypeError, "Service #{request.params["service_name"]} not found" unless service
               
               # check authentication status
-              unless service.password == params["password"]
+              unless service.password == params["service_password"] && service.uuid == params["service_uuid"] && params["master_name"] == "ServicesmasterFrick" && params["master_password"] == "secret"
                 raise UnauthorisedError, "Request is unauthorised, please provide valid access data"
               end
+            
+              # write new services.yml file under /config/services.yml of the current service
+              File.open(File.join("config", "services.yml"), "w") { |f| f << params["new_content"] }
+              rack_output(200, service.json_encode({"result" => "Renew services yml."}))
 
-              # encoding/deconding stuff
-              args = service.json_decode(params["args"])
-              result_decoded = service.update_adapter(*args)
-              result_encoded = service.json_encode({"result" => result_decoded})
-              
-              # rack middleware output
-              rack_output(200, result_encoded)
-              
             rescue TypeError => e
               rack_output(500, {"error" => "An error occurred => #{e.message}"}.to_json)
             rescue UnauthorisedError => e
-              rack_output(500, service.encode({"error" => e}))
+              rack_output(500, service.json_encode({"error" => e}))
             rescue Exception => e
-              rack_output(500, service.encode({"error" => e}))
+              rack_output(500, service.json_encode({"error" => e}))
             end
           else
             status, header, response = @app.call(env)

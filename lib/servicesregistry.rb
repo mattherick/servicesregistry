@@ -8,6 +8,7 @@ require "json"
 
 # internal files
 require "servicesregistry/rack/middleware/communication"
+require "servicesregistry/rack/middleware/adapter"
 require "servicesregistry/service"
 require "servicesregistry/registry"
 require "servicesregistry/adapter"
