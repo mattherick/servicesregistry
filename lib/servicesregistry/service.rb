@@ -4,8 +4,11 @@ module Servicesregistry
     
     ######### accessor stuff ######################################################
     
-    # name => of the service class to call
+    # name => name of the service class to call
     attr_accessor :name
+    
+    # klass_name => class of the service class to call (incl. modules, etc.)
+    attr_accessor :klass_name
     
     # uuid  => of the service to call
     attr_accessor :uuid
@@ -31,7 +34,7 @@ module Servicesregistry
     
     ######### validations #########################################################
     
-    validates :name, :uuid, :password, :url, :presence => true
+    validates :name, :klass_name, :uuid, :password, :url, :presence => true
     
     ###############################################################################
     
@@ -45,6 +48,7 @@ module Servicesregistry
         send("#{name}=", value)
       end
       self.name = attributes[:name].to_sym
+      self.request_method = attributes[:request_method].to_sym if attributes[:request_method]
     end
     
     ###############################################################################
@@ -64,22 +68,33 @@ module Servicesregistry
       @url = url_as_string[/http.*/i, 0]
     end
     
+    def communication_url
+      "#{url}/sr-communication"
+    end
+    
     # call a remote service through a reqeust to the url
     def to_remote(*args)
       body = "this is a request body"
       headers = { "User-Agent" => "servicesregistry-frick", :Accept => "application/json" }
       followlocation = true
-      request = Typhoeus::Request.new(self.url, :method => self.request_method, 
+      request = Typhoeus::Request.new(self.communication_url, :method => self.request_method, 
                                       :body => body, :params => params(args), 
                                       :headers => headers, :followlocation => followlocation)
-                        
-      # TODO implement!
-#      request.run
-#      response = request.response
-#      response.code
-#      response.total_time
-#      response.headers_has
-#      response.body
+      request.run
+      response = request.response
+      
+      # if Content-Type is json => encode json
+      # otherwise return response.body in plain-text
+      # json
+      # => on success: status == 200, response must contain a "result" key
+      # => on failure: status != 200, response must contain a "error" key
+      if response.headers.first == ["Content-Type", "application/json"]
+        # decode response string for checking about error or result
+        key = response.code == 200 ? "result" : "error"
+        return json_decode(response.body)[key]
+      else
+        return response.body
+      end
     end
     
     def to_rabbitmq(*args)
@@ -91,12 +106,12 @@ module Servicesregistry
     # => enqueue to rabbitmq messaging system => to_rabbitmq
     # => call a remote service over http      => to_remote
     # => call a local service directly        => send(:execute_communication)
-    def execute_communication(*args)
+    def execute(*args)
       if self.rabbitmq
         self.to_rabbitmq(*args)
         return nil
       else
-        call = self.local_class ? local_class.send(:execute_communication, *args) : self.to_remote(*args)
+        call = self.local_class ? local_class.send(:execute, *args) : self.to_remote(*args)
         return call
       end
     end
@@ -113,7 +128,7 @@ module Servicesregistry
     # or not => local service vs remote service
     def local_class
       begin
-        self.name.to_s.camelize.constantize
+        self.klass_name.to_s.camelize.constantize
       rescue NameError => e
         false
       end
@@ -127,6 +142,7 @@ module Servicesregistry
     def params(payload)
       { "name"    => name.to_s,
         "uuid"    => uuid.to_s,
+        "klass_name"   => klass_name.to_s,
         "password"    => password,
         "args"    => json_encode(payload)
       }

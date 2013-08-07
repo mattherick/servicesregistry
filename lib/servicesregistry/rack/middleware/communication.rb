@@ -28,17 +28,18 @@ module Servicesregistry
               params = request.params
               
               # find service
-              service = Servicesregistry.find(params["name"], params["uuid"])
+              service = Servicesregistry.find(params["name"])
+              
               raise TypeError, "Service #{request.params["name"]} not found" unless service
               
               # check authentication status
-              unless service.password == params["password"]
+              unless service.password == params["password"] && service.uuid == params["uuid"]
                 raise UnauthorisedError, "Request is unauthorised, please provide valid access data"
               end
               
               # encoding/deconding stuff
               args = service.json_decode(params["args"])
-              result_decoded = service.execute_communication(*args)
+              result_decoded = service.execute(*args)
               result_encoded = service.json_encode({"result" => result_decoded})
               
               # rack middleware output
@@ -47,9 +48,9 @@ module Servicesregistry
             rescue TypeError => e
               rack_output(500, {"error" => "An error occurred => #{e.message}"}.to_json)
             rescue UnauthorisedError => e
-              rack_output(500, service.encode({"error" => e}))
+              rack_output(500, service.json_encode({"error" => e}))
             rescue Exception => e
-              rack_output(500, service.encode({"error" => e}))
+              rack_output(500, service.json_encode({"error" => e}))
             end
               
           else

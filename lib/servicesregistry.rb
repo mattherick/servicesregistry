@@ -15,15 +15,15 @@ require "servicesregistry/adapter"
 module Servicesregistry
   
   # find a service by name and uuid
-  def self.find(name, uuid)
-    Registry.find(name, uuid)
+  def self.find(name)
+    Registry.find(name)
   end
   
   # method missing
   # calls service.execute_communication
   def self.method_missing(method, *args, &block)
     if service = find(method)
-      service.execute_communication(*args)
+      service.execute(*args)
     else
       super(method, *args, &block)
     end

@@ -5,19 +5,29 @@ module Servicesregistry
     
     ######### class methods #######################################################
 
+    # get all registered services
+    def self.services
+      instance.services
+    end
+
     # register a new service
     def self.register(service)
       instance.register(service)
     end
 
-    # get all registered services
-    def self.services
-      instance.services
+    # delete a register service
+    def self.de_register(service)
+      instance.de_register(service)
+    end
+
+    # clear all registered services
+    def self.clear_services
+      instance.clear_services
     end
     
     # get a method by a given name
-    def self.find(name, uuid)
-      instance.find(name, uuid)
+    def self.find(name)
+      instance.find(name)
     end
 
     ###############################################################################
@@ -35,7 +45,7 @@ module Servicesregistry
     # array => register new service
     # do not add if is already registered
     def register(service)
-      raise "You can only register Servicesregistry::Service instances!" unless service.class == Servicesregistry::Service
+      raise "You can only register Servicesregistry::Service instances!" unless service.class == Servicesregistry::Service      
       services << service unless services.include?(service)
     end
     
@@ -46,9 +56,14 @@ module Servicesregistry
       services.delete(service) if services.include?(service)
     end
     
+    # reset all services
+    def clear_services
+      @services = []
+    end
+    
     # get a service by a given name
-    def find(name, uuid)
-      services.detect { |s| s.name == name.to_sym && s.uuid == uuid }
+    def find(name)
+      services.detect { |s| s.name == name.to_sym }
     end
     
     ###############################################################################
