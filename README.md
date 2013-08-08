@@ -1,3 +1,5 @@
+DO NOT USE THIS IN PRODUCTION AT THE MOMENT!
+
 # Servicesregistry
 
 TODO: Write a gem description

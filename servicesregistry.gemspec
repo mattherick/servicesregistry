@@ -27,5 +27,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activemodel",  "~> 4.0.0"
   spec.add_dependency "typhoeus",     "~> 0.6.3"
   spec.add_dependency "json",         "~> 1.8.0"
-#  spec.add_dependency "amqp",         "~> 1.0.2"
 end

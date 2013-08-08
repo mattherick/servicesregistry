@@ -115,15 +115,7 @@ module Servicesregistry
         return call
       end
     end
-    
-    # update the services.yml file wihtin the current service
-    # this yml file contains all services details from the
-    # servicesmaster database
-    # this is necessary for the communication to other services
-    def update_adapter(*args)
-      # todo implement!
-    end
-    
+
     # check if service, which will be called is a local class
     # or not => local service vs remote service
     def local_class
