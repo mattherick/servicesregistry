@@ -28,18 +28,24 @@ module Servicesregistry
               request = ::Rack::Request.new(env)
               params = request.params
               
-              # find service
-              service = Servicesregistry.find(params["service_name"])
-              raise TypeError, "Service #{request.params["service_name"]} not found" unless service
-              
-              # check authentication status
-              unless service.password == params["service_password"] && service.uuid == params["service_uuid"] && params["master_name"] == "ServicesmasterFrick" && params["master_password"] == "secret"
-                raise UnauthorisedError, "Request is unauthorised, please provide valid access data"
+              if params["shutdown"] == "true"
+                exit!
+              else
+
+                # find service
+                service = Servicesregistry.find(params["service_name"])
+                raise TypeError, "Service #{request.params["service_name"]} not found" unless service
+                
+                # check authentication status
+                unless service.password == params["service_password"] && service.uuid == params["service_uuid"] && params["master_name"] == "ServicesmasterFrick" && params["master_password"] == "secret"
+                  raise UnauthorisedError, "Request is unauthorised, please provide valid access data"
+                end
+                
+                # write new services.yml file under /config/services.yml of the current service
+                File.open(File.join("config", "services.yml"), "w") { |f| f << params["new_content"] }
+                rack_output(200, service.json_encode({"result" => "Renew services yml."}))
+                
               end
-            
-              # write new services.yml file under /config/services.yml of the current service
-              File.open(File.join("config", "services.yml"), "w") { |f| f << params["new_content"] }
-              rack_output(200, service.json_encode({"result" => "Renew services yml."}))
 
             rescue TypeError => e
               rack_output(500, {"error" => "An error occurred => #{e.message}"}.to_json)

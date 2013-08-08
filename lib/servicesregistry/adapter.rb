@@ -39,6 +39,7 @@ module Servicesregistry
           puts "Services.yml could not be updated: #{response}"
         end
       end
+      
     end
 
   end
