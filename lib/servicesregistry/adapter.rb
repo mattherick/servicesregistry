@@ -1,3 +1,5 @@
+require "yaml"
+
 module Servicesregistry
   class Adapter
     
@@ -35,6 +37,20 @@ module Servicesregistry
         end
         if response["status"] == 200
           File.open(File.join("config", "services.yml"), "w") { |f| f << response["message"] }
+          
+          config = YAML::load_file(File.join("config", "services.yml"))
+          Servicesregistry::Registry.clear_services
+
+          config["services"].each do |service|
+            service_name = service[0]
+            service_klass_name = service[1]["klass_name"]
+            service_uuid = service[1]["uuid"]
+            service_password = service[1]["password"]
+            service_url = service[1]["environments"][ENV['RACK_ENV']]["url"]
+            service = { :name => service_name, :klass_name => service_klass_name, :uuid => service_uuid, :password => service_password, :url => service_url }
+            Servicesregistry::Registry.register(Servicesregistry::Service.new(service))
+          end
+
         else
           puts "Services.yml could not be updated: #{response}"
         end
