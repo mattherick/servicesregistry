@@ -82,19 +82,7 @@ module Servicesregistry
                                       :headers => headers, :followlocation => followlocation)
       request.run
       response = request.response
-      
-      # if Content-Type is json => encode json
-      # otherwise return response.body in plain-text
-      # json
-      # => on success: status == 200, response must contain a "result" key
-      # => on failure: status != 200, response must contain a "error" key
-      if response.headers.first == ["Content-Type", "application/json"]
-        # decode response string for checking about error or result
-        key = response.code == 200 ? "result" : "error"
-        return json_decode(response.body)[key]
-      else
-        return response.body
-      end
+      return response.body
     end
     
     def to_rabbitmq(*args)
