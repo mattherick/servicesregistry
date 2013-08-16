@@ -21,7 +21,7 @@ module Servicesregistry
   end
   
   # method missing
-  # calls service.execute_communication
+  # calls service.execute
   def self.method_missing(method, *args, &block)
     if service = find(method)
       service.execute(*args)

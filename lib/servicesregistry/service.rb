@@ -68,6 +68,7 @@ module Servicesregistry
       @url = url_as_string[/http.*/i, 0]
     end
     
+    # return communication url
     def communication_url
       "#{url}/sr-communication"
     end
@@ -85,6 +86,11 @@ module Servicesregistry
       return response.body
     end
     
+    # for the future!!
+    # you can add rabbitmq functionality here
+    # this only should show how easy you could
+    # extend the servicesregistry gem with new
+    # communication tools
     def to_rabbitmq(*args)
       # TODO implement
       raise "TODO implement rabbitmq messaging"
@@ -115,7 +121,8 @@ module Servicesregistry
     end
 
     # prepare params for call
-    # name => name of the soa class, which will be called
+    # name => for identification
+    # klass_name => klass_name of the soa class, which will be called
     # uuid => uuid of the soa class, which will be called
     # password => password of the soa class, which will be called
     # args => args for the soa class method

@@ -15,7 +15,7 @@ module Servicesregistry
       instance.register(service)
     end
 
-    # delete a register service
+    # delete a registered service
     def self.de_register(service)
       instance.de_register(service)
     end
